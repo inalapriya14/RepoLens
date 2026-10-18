@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>{{ data['name'] }} - RepoLens</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+
+    <div class="container">
+
+        <h1>🔍 RepoLens</h1>
+
+        <p class="subtitle">
+            GitHub Repository Analysis
+        </p>
+
+        <div class="results">
+
+            <!-- Repository Name -->
+            <h2>📁 {{ data['name'] }}</h2>
+
+            <!-- Description -->
+            <p>
+                {{ data['description'] or 'No description available.' }}
+            </p>
+
+
+            <!-- Repository Statistics -->
+            <div class="stats">
+
+                <div class="stat">
+                    <h2>⭐</h2>
+                    <p>Stars</p>
+                    <strong>
+                        {{ data['stargazers_count'] }}
+                    </strong>
+                </div>
+
+
+                <div class="stat">
+                    <h2>🍴</h2>
+                    <p>Forks</p>
+                    <strong>
+                        {{ data['forks_count'] }}
+                    </strong>
+                </div>
+
+
+                <div class="stat">
+                    <h2>🐛</h2>
+                    <p>Open Issues</p>
+                    <strong>
+                        {{ data['open_issues_count'] }}
+                    </strong>
+                </div>
+
+
+                <div class="stat">
+                    <h2>💻</h2>
+                    <p>Primary Language</p>
+                    <strong>
+                        {{ data['language'] or 'N/A' }}
+                    </strong>
+                </div>
+
+            </div>
+
+
+            <!-- Language Analysis -->
+            <h2>💻 Languages</h2>
+
+            <div class="language-list">
+
+                {% if languages %}
+
+                    {% for language, percentage in languages.items() %}
+
+                        <div class="language">
+
+                            <span>
+                                {{ language }}
+                            </span>
+
+                            <span>
+                                {{ percentage }}%
+                            </span>
+
+                        </div>
+
+                    {% endfor %}
+
+                {% else %}
+
+                    <p>
+                        No language data available.
+                    </p>
+
+                {% endif %}
+
+            </div>
+
+
+            <!-- Analyze Another Repository -->
+            <a href="/">
+                ← Analyze another repository
+            </a>
+
+        </div>
+
+    </div>
+
+</body>
+
+</html>

@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>RepoLens - GitHub Repository Analyzer</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+
+    <div class="container">
+
+        <h1>🔍 RepoLens</h1>
+
+        <p class="subtitle">
+            GitHub Repository Analyzer
+        </p>
+
+        <div class="search-box">
+
+            <form action="/analyze" method="POST">
+
+                <input
+                    type="text"
+                    name="repo_url"
+                    placeholder="https://github.com/username/repository"
+                    required
+                >
+
+                <button type="submit">
+                    Analyze Repository
+                </button>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</body>
+
+</html>

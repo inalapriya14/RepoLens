@@ -1,0 +1,775 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Compare Repositories - RepoLens</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, Helvetica, sans-serif;
+            background: linear-gradient(135deg, #eef2ff, #f8fafc);
+            min-height: 100vh;
+            color: #1e293b;
+        }
+
+        .container {
+            width: 92%;
+            max-width: 1200px;
+            margin: 40px auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            color: #1e3a8a;
+            font-size: 34px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #64748b;
+            font-size: 16px;
+        }
+
+        .compare-card {
+            background: #ffffff;
+            border-radius: 18px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+        }
+
+        .repositories {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 22px;
+            margin-bottom: 25px;
+        }
+
+        .repo-box {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 14px;
+            padding: 22px;
+        }
+
+        .repo-box h2 {
+            color: #334155;
+            font-size: 20px;
+            margin-top: 0;
+        }
+
+        label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #475569;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 13px;
+            border: 1px solid #cbd5e1;
+            border-radius: 9px;
+            font-size: 15px;
+            outline: none;
+        }
+
+        input[type="text"]:focus {
+            border-color: #6366f1;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+        }
+
+        .hint {
+            margin-top: 9px;
+            color: #64748b;
+            font-size: 13px;
+            line-height: 1.6;
+            overflow-wrap: anywhere;
+        }
+
+        .button-container {
+            text-align: center;
+            margin: 25px 0 10px;
+        }
+
+        button {
+            border: none;
+            padding: 14px 28px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(79, 70, 229, 0.25);
+        }
+
+        .error {
+            margin-bottom: 22px;
+            padding: 15px;
+            border-radius: 10px;
+            background: #fef2f2;
+            color: #b91c1c;
+            border: 1px solid #fecaca;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .success {
+            margin: 28px 0 20px;
+            padding: 17px;
+            border-radius: 12px;
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            color: #166534;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .repo-result {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 22px;
+            margin: 25px 0 35px;
+        }
+
+        .result-box {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 14px;
+            padding: 22px;
+            overflow-wrap: anywhere;
+        }
+
+        .result-box h3 {
+            margin-top: 0;
+            color: #1e3a8a;
+            font-size: 21px;
+        }
+
+        .result-box p {
+            margin: 13px 0;
+            color: #475569;
+            line-height: 1.5;
+        }
+
+        .result-box strong {
+            color: #0f172a;
+        }
+
+        .repo-link {
+            color: #4f46e5;
+            text-decoration: none;
+            overflow-wrap: anywhere;
+        }
+
+        .repo-link:hover {
+            text-decoration: underline;
+        }
+
+        .comparison-table-section,
+        .comparison-chart-section {
+            margin-top: 35px;
+        }
+
+        .comparison-table-section h2,
+        .comparison-chart-section h2 {
+            color: #1e3a8a;
+            margin-bottom: 10px;
+        }
+
+        .section-description {
+            color: #64748b;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+
+        .comparison-table-wrapper {
+            width: 100%;
+            overflow-x: auto;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+        }
+
+        .comparison-table {
+            width: 100%;
+            min-width: 600px;
+            border-collapse: collapse;
+            background: white;
+        }
+
+        .comparison-table th,
+        .comparison-table td {
+            padding: 15px;
+            border-bottom: 1px solid #e2e8f0;
+            text-align: left;
+            vertical-align: top;
+            overflow-wrap: anywhere;
+        }
+
+        .comparison-table th {
+            background: #eef2ff;
+            color: #1e3a8a;
+        }
+
+        .comparison-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .comparison-table tbody tr:hover {
+            background: #f8fafc;
+        }
+
+        .comparison-chart-container {
+            position: relative;
+            width: 100%;
+            height: 360px;
+            padding: 20px;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 14px;
+        }
+
+        .comparison-winner {
+            margin-top: 25px;
+            padding: 20px;
+            background: #eef2ff;
+            border: 1px solid #c7d2fe;
+            border-radius: 12px;
+            color: #3730a3;
+            line-height: 1.7;
+        }
+
+        .comparison-actions {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 25px;
+        }
+
+        .action-link {
+            display: inline-block;
+            padding: 12px 20px;
+            border-radius: 9px;
+            background: #4f46e5;
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .action-link:hover {
+            background: #3730a3;
+        }
+
+        .back-link {
+            display: block;
+            text-align: center;
+            margin-top: 28px;
+            color: #4f46e5;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                width: 94%;
+                margin: 25px auto;
+            }
+
+            .compare-card {
+                padding: 18px;
+            }
+
+            .repositories,
+            .repo-result {
+                grid-template-columns: 1fr;
+            }
+
+            .header h1 {
+                font-size: 27px;
+            }
+
+            .comparison-chart-container {
+                height: 300px;
+                padding: 10px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+<div class="container">
+
+    <header class="header">
+        <h1>🔎 Compare GitHub Repositories</h1>
+        <p>Compare repository statistics and performance using RepoLens.</p>
+    </header>
+
+    <main class="compare-card">
+
+        {% if error %}
+        <div class="error">
+            ⚠️ {{ error }}
+        </div>
+        {% endif %}
+
+        <form method="POST" action="{{ url_for('compare') }}">
+            <div class="repositories">
+
+                <div class="repo-box">
+                    <h2>📦 Repository 1</h2>
+
+                    <label for="repo_url_1">GitHub Repository URL</label>
+                    <input
+                        type="text"
+                        id="repo_url_1"
+                        name="repo_url_1"
+                        placeholder="https://github.com/user/project-one"
+                        value="{{ repo_url_1 or '' }}"
+                        required
+                    >
+
+                    <div class="hint">
+                        Enter the full GitHub repository URL.
+                        <br>
+                        Example: https://github.com/user/project-one
+                    </div>
+                </div>
+
+                <div class="repo-box">
+                    <h2>📦 Repository 2</h2>
+
+                    <label for="repo_url_2">GitHub Repository URL</label>
+                    <input
+                        type="text"
+                        id="repo_url_2"
+                        name="repo_url_2"
+                        placeholder="https://github.com/user/project-two"
+                        value="{{ repo_url_2 or '' }}"
+                        required
+                    >
+
+                    <div class="hint">
+                        Enter another GitHub repository URL.
+                        <br>
+                        Example: https://github.com/user/project-two
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="button-container">
+                <button type="submit">🔍 Compare Repositories</button>
+            </div>
+        </form>
+
+        {% if comparison_ready %}
+
+        <div class="success">
+            ✅ Both repositories were retrieved successfully!
+        </div>
+
+        <section class="repo-result">
+
+            <article class="result-box">
+                <h3>📦 Repository 1</h3>
+
+                <p>
+                    <strong>Name:</strong>
+                    {{ repository_1.get("name", "N/A") }}
+                </p>
+
+                <p>
+                    <strong>Owner:</strong>
+                    {{ repository_1.get("owner", {}).get("login", "N/A") }}
+                </p>
+
+                <p>
+                    <strong>Stars:</strong>
+                    ⭐ {{ repository_1.get("stargazers_count", 0) }}
+                </p>
+
+                <p>
+                    <strong>Forks:</strong>
+                    🍴 {{ repository_1.get("forks_count", 0) }}
+                </p>
+
+                <p>
+                    <strong>Open Issues:</strong>
+                    🐛 {{ repository_1.get("open_issues_count", 0) }}
+                </p>
+
+                <p>
+                    <strong>Visibility:</strong>
+                    {% if repository_1.get("private") %}
+                        Private
+                    {% else %}
+                        Public
+                    {% endif %}
+                </p>
+
+                <p>
+                    <strong>Default Branch:</strong>
+                    {{ repository_1.get("default_branch", "N/A") }}
+                </p>
+
+                <p>
+                    <strong>Description:</strong>
+                    {{ repository_1.get("description") or "Not provided" }}
+                </p>
+
+                <p>
+                    <strong>Repository URL:</strong><br>
+                    <a
+                        href="{{ repository_1.get('html_url', '#') }}"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="repo-link"
+                    >
+                        {{ repository_1.get("html_url", "N/A") }}
+                    </a>
+                </p>
+            </article>
+
+            <article class="result-box">
+                <h3>📦 Repository 2</h3>
+
+                <p>
+                    <strong>Name:</strong>
+                    {{ repository_2.get("name", "N/A") }}
+                </p>
+
+                <p>
+                    <strong>Owner:</strong>
+                    {{ repository_2.get("owner", {}).get("login", "N/A") }}
+                </p>
+
+                <p>
+                    <strong>Stars:</strong>
+                    ⭐ {{ repository_2.get("stargazers_count", 0) }}
+                </p>
+
+                <p>
+                    <strong>Forks:</strong>
+                    🍴 {{ repository_2.get("forks_count", 0) }}
+                </p>
+
+                <p>
+                    <strong>Open Issues:</strong>
+                    🐛 {{ repository_2.get("open_issues_count", 0) }}
+                </p>
+
+                <p>
+                    <strong>Visibility:</strong>
+                    {% if repository_2.get("private") %}
+                        Private
+                    {% else %}
+                        Public
+                    {% endif %}
+                </p>
+
+                <p>
+                    <strong>Default Branch:</strong>
+                    {{ repository_2.get("default_branch", "N/A") }}
+                </p>
+
+                <p>
+                    <strong>Description:</strong>
+                    {{ repository_2.get("description") or "Not provided" }}
+                </p>
+
+                <p>
+                    <strong>Repository URL:</strong><br>
+                    <a
+                        href="{{ repository_2.get('html_url', '#') }}"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="repo-link"
+                    >
+                        {{ repository_2.get("html_url", "N/A") }}
+                    </a>
+                </p>
+            </article>
+
+        </section>
+
+        <section class="comparison-table-section">
+            <h2>📊 Repository Comparison Dashboard</h2>
+            <p class="section-description">
+                Compare the important statistics of both repositories side by side.
+            </p>
+
+            <div class="comparison-table-wrapper">
+                <table class="comparison-table">
+                    <thead>
+                        <tr>
+                            <th>Metric</th>
+                            <th>
+                                {{ repository_1.get("full_name", repository_1.get("name", "Repository 1")) }}
+                            </th>
+                            <th>
+                                {{ repository_2.get("full_name", repository_2.get("name", "Repository 2")) }}
+                            </th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        <tr>
+                            <td>⭐ Stars</td>
+                            <td>{{ repository_1.get("stargazers_count", 0) }}</td>
+                            <td>{{ repository_2.get("stargazers_count", 0) }}</td>
+                        </tr>
+
+                        <tr>
+                            <td>🍴 Forks</td>
+                            <td>{{ repository_1.get("forks_count", 0) }}</td>
+                            <td>{{ repository_2.get("forks_count", 0) }}</td>
+                        </tr>
+
+                        <tr>
+                            <td>🐛 Open Issues</td>
+                            <td>{{ repository_1.get("open_issues_count", 0) }}</td>
+                            <td>{{ repository_2.get("open_issues_count", 0) }}</td>
+                        </tr>
+
+                        <tr>
+                            <td>🔒 Visibility</td>
+                            <td>
+                                {{ "Private" if repository_1.get("private") else "Public" }}
+                            </td>
+                            <td>
+                                {{ "Private" if repository_2.get("private") else "Public" }}
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td>🌿 Default Branch</td>
+                            <td>{{ repository_1.get("default_branch", "N/A") }}</td>
+                            <td>{{ repository_2.get("default_branch", "N/A") }}</td>
+                        </tr>
+
+                        <tr>
+                            <td>📝 Description</td>
+                            <td>{{ repository_1.get("description") or "Not provided" }}</td>
+                            <td>{{ repository_2.get("description") or "Not provided" }}</td>
+                        </tr>
+
+                        <tr>
+                            <td>🗓️ Created</td>
+                            <td>{{ (repository_1.get("created_at") or "N/A")[:10] }}</td>
+                            <td>{{ (repository_2.get("created_at") or "N/A")[:10] }}</td>
+                        </tr>
+
+                        <tr>
+                            <td>🔄 Last Updated</td>
+                            <td>{{ (repository_1.get("updated_at") or "N/A")[:10] }}</td>
+                            <td>{{ (repository_2.get("updated_at") or "N/A")[:10] }}</td>
+                        </tr>
+
+                        <tr>
+                            <td>🌐 Website</td>
+                            <td>
+                                {% if repository_1.get("homepage") %}
+                                    <a class="repo-link"
+                                       href="{{ repository_1.get('homepage') }}"
+                                       target="_blank"
+                                       rel="noopener noreferrer">Open Website</a>
+                                {% else %}
+                                    Not provided
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if repository_2.get("homepage") %}
+                                    <a class="repo-link"
+                                       href="{{ repository_2.get('homepage') }}"
+                                       target="_blank"
+                                       rel="noopener noreferrer">Open Website</a>
+                                {% else %}
+                                    Not provided
+                                {% endif %}
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        {% set stars_1 = repository_1.get("stargazers_count", 0) %}
+        {% set stars_2 = repository_2.get("stargazers_count", 0) %}
+        {% set forks_1 = repository_1.get("forks_count", 0) %}
+        {% set forks_2 = repository_2.get("forks_count", 0) %}
+        {% set issues_1 = repository_1.get("open_issues_count", 0) %}
+        {% set issues_2 = repository_2.get("open_issues_count", 0) %}
+
+        <section class="comparison-chart-section">
+            <h2>📈 Statistics Visualization</h2>
+            <p class="section-description">
+                View stars, forks, and open issues in a bar chart.
+            </p>
+
+            <div class="comparison-chart-container">
+                <canvas id="repositoryComparisonChart"></canvas>
+            </div>
+        </section>
+
+        <section class="comparison-winner">
+            <h3>🏆 Quick Comparison Summary</h3>
+
+            <p>
+                <strong>More Stars:</strong>
+                {% if stars_1 > stars_2 %}
+                    {{ repository_1.get("full_name", repository_1.get("name", "Repository 1")) }}
+                {% elif stars_2 > stars_1 %}
+                    {{ repository_2.get("full_name", repository_2.get("name", "Repository 2")) }}
+                {% else %}
+                    Both repositories have the same number of stars.
+                {% endif %}
+            </p>
+
+            <p>
+                <strong>More Forks:</strong>
+                {% if forks_1 > forks_2 %}
+                    {{ repository_1.get("full_name", repository_1.get("name", "Repository 1")) }}
+                {% elif forks_2 > forks_1 %}
+                    {{ repository_2.get("full_name", repository_2.get("name", "Repository 2")) }}
+                {% else %}
+                    Both repositories have the same number of forks.
+                {% endif %}
+            </p>
+
+            <p>
+                <strong>Fewer Open Issues:</strong>
+                {% if issues_1 < issues_2 %}
+                    {{ repository_1.get("full_name", repository_1.get("name", "Repository 1")) }}
+                {% elif issues_2 < issues_1 %}
+                    {{ repository_2.get("full_name", repository_2.get("name", "Repository 2")) }}
+                {% else %}
+                    Both repositories have the same number of open issues.
+                {% endif %}
+            </p>
+
+            <p>
+                <em>
+                    These statistics alone do not determine code quality or project health.
+                </em>
+            </p>
+        </section>
+
+        <div class="comparison-actions">
+            <a class="action-link" href="{{ url_for('compare') }}">
+                🔄 Compare Again
+            </a>
+        </div>
+
+        {% endif %}
+
+    </main>
+
+    <a href="{{ url_for('home') }}" class="back-link">
+        ← Back to RepoLens
+    </a>
+
+</div>
+
+{% if comparison_ready %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const comparisonCanvas = document.getElementById(
+        "repositoryComparisonChart"
+    );
+
+    if (comparisonCanvas && typeof Chart !== "undefined") {
+        new Chart(comparisonCanvas, {
+            type: "bar",
+            data: {
+                labels: ["Stars", "Forks", "Open Issues"],
+                datasets: [
+                    {
+                        label: {{ repository_1.get("full_name", repository_1.get("name", "Repository 1")) | tojson }},
+                        data: [
+                            {{ stars_1 | tojson }},
+                            {{ forks_1 | tojson }},
+                            {{ issues_1 | tojson }}
+                        ],
+                        backgroundColor: "rgba(79, 70, 229, 0.75)",
+                        borderColor: "rgb(79, 70, 229)",
+                        borderWidth: 1,
+                        borderRadius: 6
+                    },
+                    {
+                        label: {{ repository_2.get("full_name", repository_2.get("name", "Repository 2")) | tojson }},
+                        data: [
+                            {{ stars_2 | tojson }},
+                            {{ forks_2 | tojson }},
+                            {{ issues_2 | tojson }}
+                        ],
+                        backgroundColor: "rgba(14, 165, 233, 0.75)",
+                        borderColor: "rgb(14, 165, 233)",
+                        borderWidth: 1,
+                        borderRadius: 6
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                    intersect: false,
+                    mode: "index"
+                },
+                plugins: {
+                    legend: {
+                        position: "top"
+                    },
+                    tooltip: {
+                        enabled: true
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            precision: 0
+                        }
+                    }
+                }
+            }
+        });
+    }
+</script>
+{% endif %}
+
+</body>
+</html>
+
+        
+
+        
+
+
+
+                        
+
+
+                    

@@ -1,0 +1,879 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RepoLens - Repository Analytics Dashboard</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='style.css') }}">
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+<div class="container">
+
+    <!-- HEADER -->
+    <header class="page-header">
+        <div class="brand">
+            <div class="brand-icon">🔍</div>
+            <div>
+                <h1>RepoLens</h1>
+                <p>GitHub Repository Analysis Dashboard</p>
+            </div>
+        </div>
+
+        <div class="header-actions">
+            <a href="/" class="btn btn-secondary">← Analyze Another</a>
+            <a href="{{ url_for('download_report') }}"
+               class="btn btn-primary">Download Report</a>
+        </div>
+    </header>
+
+    <!-- REPOSITORY INFORMATION -->
+    <section class="panel" id="repository-information">
+        <div class="section-heading">
+            <div>
+                <span class="eyebrow">REPOSITORY PROFILE</span>
+                <h2>📦 Repository Information</h2>
+            </div>
+            {% if data.private %}
+                <span class="status-badge status-warning">Private</span>
+            {% else %}
+                <span class="status-badge status-success">Public</span>
+            {% endif %}
+        </div>
+
+        <div class="info-grid">
+            <article class="info-card">
+                <span class="card-label">Repository</span>
+                <h3>{{ data.name or "Unknown" }}</h3>
+            </article>
+
+            <article class="info-card">
+                <span class="card-label">Owner</span>
+                <h3>{{ data.owner.login if data.owner else "Unknown" }}</h3>
+            </article>
+
+            <article class="info-card">
+                <span class="card-label">Default Branch</span>
+                <h3>{{ data.default_branch or "Not specified" }}</h3>
+            </article>
+
+            <article class="info-card">
+                <span class="card-label">Primary Language</span>
+                <h3>{{ data.language or "Not specified" }}</h3>
+            </article>
+        </div>
+
+        {% if data.description %}
+        <div class="description-card">
+            <span class="card-label">Description</span>
+            <p>{{ data.description }}</p>
+        </div>
+        {% endif %}
+
+        <a class="text-link"
+           href="{{ data.html_url }}"
+           target="_blank"
+           rel="noopener noreferrer">
+            View repository on GitHub ↗
+        </a>
+    </section>
+
+    <!-- QUICK STATS -->
+    <section class="stats-grid">
+        <article class="stat-card">
+            <div class="stat-icon">⭐</div>
+            <div>
+                <span class="stat-label">Stars</span>
+                <strong>{{ data.stargazers_count|default(0, true) }}</strong>
+            </div>
+        </article>
+
+        <article class="stat-card">
+            <div class="stat-icon">🍴</div>
+            <div>
+                <span class="stat-label">Forks</span>
+                <strong>{{ data.forks_count|default(0, true) }}</strong>
+            </div>
+        </article>
+
+        <article class="stat-card">
+            <div class="stat-icon">🐛</div>
+            <div>
+                <span class="stat-label">Open Issues</span>
+                <strong>{{ data.open_issues_count|default(0, true) }}</strong>
+            </div>
+        </article>
+
+        <article class="stat-card">
+            <div class="stat-icon">💻</div>
+            <div>
+                <span class="stat-label">Primary Language</span>
+                <strong class="stat-language">
+                    {{ data.language or "N/A" }}
+                </strong>
+            </div>
+        </article>
+    </section>
+
+    <!-- ANALYTICS OVERVIEW -->
+    <section class="panel analytics-dashboard">
+        <div class="section-heading">
+            <div>
+                <span class="eyebrow">PROJECT HEALTH</span>
+                <h2>📈 Repository Analytics Overview</h2>
+                <p class="section-description">
+                    Review repository health, security, documentation,
+                    activity, and development metrics.
+                </p>
+            </div>
+        </div>
+
+        <div class="analytics-score-grid">
+            <article class="analytics-score-card">
+                <div class="analytics-score-icon">❤️</div>
+                <div class="analytics-score-number">
+                    {{ health_score|default(0, true) }}%
+                </div>
+                <div class="analytics-score-label">Repository Health</div>
+                <div class="analytics-progress">
+                    <div class="analytics-progress-bar health-progress"
+                         data-score="{{ health_score|default(0, true) }}"></div>
+                </div>
+            </article>
+
+            <article class="analytics-score-card">
+                <div class="analytics-score-icon">🔐</div>
+                <div class="analytics-score-number">
+                    {{ security_analysis.score|default(0, true) }}%
+                </div>
+                <div class="analytics-score-label">Security Hygiene</div>
+                <div class="analytics-progress">
+                    <div class="analytics-progress-bar security-progress"
+                         data-score="{{ security_analysis.score|default(0, true) }}"></div>
+                </div>
+            </article>
+
+            <article class="analytics-score-card">
+                <div class="analytics-score-icon">⚠️</div>
+                <div class="analytics-score-number">
+                    {{ risk_analysis.score|default(0, true) }}%
+                </div>
+                <div class="analytics-score-label">Risk Score</div>
+                <div class="analytics-progress">
+                    <div class="analytics-progress-bar risk-progress"
+                         data-score="{{ risk_analysis.score|default(0, true) }}"></div>
+                </div>
+            </article>
+
+            <article class="analytics-score-card">
+                <div class="analytics-score-icon">📚</div>
+                <div class="analytics-score-number">
+                    {{ documentation.documentation_score|default(0, true) }}%
+                </div>
+                <div class="analytics-score-label">Documentation</div>
+                <div class="analytics-progress">
+                    <div class="analytics-progress-bar documentation-progress"
+                         data-score="{{ documentation.documentation_score|default(0, true) }}"></div>
+                </div>
+            </article>
+        </div>
+
+        <div class="analytics-summary-card">
+            <h3>Repository Summary</h3>
+            <div class="analytics-summary-grid">
+                <div class="analytics-summary-item">
+                    <strong>Repository</strong>
+                    <span>{{ data.full_name or data.name or "Unknown" }}</span>
+                </div>
+                <div class="analytics-summary-item">
+                    <strong>Default branch</strong>
+                    <span>{{ data.default_branch or "Not available" }}</span>
+                </div>
+                <div class="analytics-summary-item">
+                    <strong>License</strong>
+                    <span>
+                        {% if documentation.license %}
+                            {{ documentation.license }}
+                        {% else %}
+                            Check documentation results below
+                        {% endif %}
+                    </span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- STEP 19: SEARCH AND QUICK NAVIGATION -->
+    <section class="panel dashboard-tools" id="dashboard-tools">
+        <div class="section-heading">
+            <div>
+                <span class="eyebrow">DASHBOARD TOOLS</span>
+                <h2>🔎 Search and Navigate</h2>
+                <p class="section-description">
+                    Search dashboard sections or jump directly to a section.
+                </p>
+            </div>
+        </div>
+
+        <div class="dashboard-search-box">
+            <input type="search"
+                   id="dashboardSearch"
+                   placeholder="Search health, security, contributors, issues..."
+                   aria-label="Search dashboard sections">
+
+            <button type="button"
+                    id="clearDashboardSearch"
+                    class="btn btn-secondary">
+                Clear
+            </button>
+        </div>
+
+        <p id="dashboardSearchStatus"
+           class="dashboard-search-status"
+           aria-live="polite">
+            Showing all dashboard sections.
+        </p>
+
+        <nav id="dashboardQuickNav"
+             class="dashboard-quick-nav"
+             aria-label="Dashboard sections">
+        </nav>
+    </section>
+
+    <!-- LANGUAGES -->
+    <section class="panel">
+        <div class="section-heading">
+            <div>
+                <span class="eyebrow">CODE DISTRIBUTION</span>
+                <h2>💻 Programming Languages</h2>
+            </div>
+        </div>
+
+        {% if languages %}
+        <div class="chart-layout">
+            <div class="language-chart-container">
+                <canvas id="languageChart"></canvas>
+            </div>
+
+            <div class="language-list">
+                {% for language, percentage in languages.items() %}
+                <div class="language-item">
+                    <div class="language-item-heading">
+                        <span>{{ language }}</span>
+                        <strong>{{ percentage }}%</strong>
+                    </div>
+                    <div class="language-track">
+                        <div class="language-bar"
+                             style="width: {{ percentage }}%;"></div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            No programming language statistics are available for this repository.
+        </div>
+        {% endif %}
+    </section>
+
+    <!-- DOCUMENTATION -->
+    <section class="panel">
+        <div class="section-heading">
+            <div>
+                <span class="eyebrow">PROJECT DOCUMENTATION</span>
+                <h2>📚 Documentation Health</h2>
+            </div>
+        </div>
+
+        <div class="result-grid">
+            {% if documentation %}
+                {% for key, value in documentation.items() %}
+                <article class="result-card">
+                    <h3>{{ key|replace("_", " ")|title }}</h3>
+                    {% if value is mapping %}
+                        {% for subkey, subvalue in value.items() %}
+                        <p><strong>{{ subkey|replace("_", " ")|title }}:</strong>
+                            {{ subvalue }}</p>
+                        {% endfor %}
+                    {% elif value is iterable and value is not string %}
+                        <ul>
+                            {% for item in value %}
+                            <li>{{ item }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p>{{ value }}</p>
+                    {% endif %}
+                </article>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state">No documentation results available.</div>
+            {% endif %}
+        </div>
+    </section>
+
+    <!-- RECOMMENDATIONS -->
+    <section class="panel">
+        <div class="section-heading">
+            <div>
+                <span class="eyebrow">NEXT STEPS</span>
+                <h2>💡 Recommendations</h2>
+            </div>
+        </div>
+
+        {% if recommendations %}
+        <ul class="recommendation-list">
+            {% for recommendation in recommendations %}
+            <li>{{ recommendation }}</li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <div class="empty-state">
+            No general recommendations were provided.
+        </div>
+        {% endif %}
+    </section>
+
+    <!-- CODE METRICS -->
+    <section class="panel">
+        <div class="section-heading">
+            <div>
+                <span class="eyebrow">CODE QUALITY</span>
+                <h2>📐 Code Metrics</h2>
+            </div>
+        </div>
+
+        {% if code_metrics %}
+        <div class="result-grid">
+            {% for key, value in code_metrics.items() %}
+            <article class="result-card">
+                <span class="card-label">
+                    {{ key|replace("_", " ")|title }}
+                </span>
+                <strong class="metric-value">
+                    {% if value is mapping %}
+                        {{ value|length }} items
+                    {% elif value is iterable and value is not string %}
+                        {{ value|length }} items
+                    {% else %}
+                        {{ value }}
+                    {% endif %}
+                </strong>
+
+                {% if value is mapping %}
+                <ul>
+                    {% for subkey, subvalue in value.items() %}
+                    <li>{{ subkey }}: {{ subvalue }}</li>
+                    {% endfor %}
+                </ul>
+                {% elif value is iterable and value is not string %}
+                <ul>
+                    {% for item in value %}
+                    <li>{{ item }}</li>
+                    {% endfor %}
+                </ul>
+                {% endif %}
+            </article>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">No code metrics available.</div>
+        {% endif %}
+    </section>
+
+    <!-- README ANALYSIS -->
+    <section class="panel">
+        <div class="section-heading">
+            <div>
+                <span class="eyebrow">PROJECT OVERVIEW</span>
+                <h2>📄 README Analysis</h2>
+            </div>
+        </div>
+
+        {% if readme_analysis %}
+        <div class="result-grid">
+            {% for key, value in readme_analysis.items() %}
+            <article class="result-card">
+                <h3>{{ key|replace("_", " ")|title }}</h3>
+                {% if value is mapping %}
+                    {% for subkey, subvalue in value.items() %}
+                    <p><strong>{{ subkey|replace("_", " ")|title }}:</strong>
+                        {{ subvalue }}</p>
+                    {% endfor %}
+                {% elif value is iterable and value is not string %}
+                    <ul>
+                        {% for item in value %}
+                        <li>{{ item }}</li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p>{{ value }}</p>
+                {% endif %}
+            </article>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">No README analysis is available.</div>
+        {% endif %}
+    </section>
+
+    <!-- DEPENDENCIES -->
+    <section class="panel">
+        <div class="section-heading">
+            <div>
+                <span class="eyebrow">PACKAGES AND LIBRARIES</span>
+                <h2>📦 Dependency Analysis</h2>
+            </div>
+        </div>
+
+        {% if dependencies %}
+        <div class="result-grid">
+            {% for key, value in dependencies.items() %}
+            <article class="result-card">
+                <h3>{{ key|replace("_", " ")|title }}</h3>
+                {% if value is mapping %}
+                    <ul>
+                        {% for subkey, subvalue in value.items() %}
+                        <li><strong>{{ subkey }}:</strong> {{ subvalue }}</li>
+                        {% endfor %}
+                    </ul>
+                {% elif value is iterable and value is not string %}
+                    <ul>
+                        {% for item in value %}
+                        <li>{{ item }}</li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p>{{ value }}</p>
+                {% endif %}
+            </article>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">No dependency information is available.</div>
+        {% endif %}
+    </section>
+
+    <!-- REPOSITORY RISK -->
+    <section class="panel">
+        <div class="section-heading">
+            <div>
+                <span class="eyebrow">RISK ASSESSMENT</span>
+                <h2>⚠️ Repository Risk Analysis</h2>
+            </div>
+        </div>
+
+        {% if risk_analysis %}
+        <div class="result-grid">
+            {% for key, value in risk_analysis.items() %}
+            <article class="result-card">
+                <h3>{{ key|replace("_", " ")|title }}</h3>
+                {% if value is mapping %}
+                    <ul>
+                        {% for subkey, subvalue in value.items() %}
+                        <li><strong>{{ subkey|title }}:</strong> {{ subvalue }}</li>
+                        {% endfor %}
+                    </ul>
+                {% elif value is iterable and value is not string %}
+                    <ul>
+                        {% for item in value %}
+                        <li>{{ item }}</li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p>{{ value }}</p>
+                {% endif %}
+            </article>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">No repository risk analysis is available.</div>
+        {% endif %}
+    </section>
+
+    <!-- SECURITY HYGIENE -->
+    <section class="panel">
+        <div class="section-heading">
+            <div>
+                <span class="eyebrow">SECURITY CHECKS</span>
+                <h2>🔐 Security Hygiene</h2>
+            </div>
+            {% if security_analysis.level %}
+            <span class="status-badge status-success">
+                {{ security_analysis.level }}
+            </span>
+            {% endif %}
+        </div>
+
+        {% if security_analysis %}
+            {% for key, value in security_analysis.items() %}
+                {% if key not in ["score", "level"] %}
+                <div class="security-result">
+                    <h3>{{ key|replace("_", " ")|title }}</h3>
+
+                    {% if value is mapping %}
+                        <ul>
+                            {% for subkey, subvalue in value.items() %}
+                            <li><strong>{{ subkey|title }}:</strong> {{ subvalue }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% elif value is iterable and value is not string %}
+                        <ul>
+                            {% for item in value %}
+                            <li>{{ item }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p>{{ value }}</p>
+                    {% endif %}
+                </div>
+                {% endif %}
+            {% endfor %}
+        {% else %}
+        <div class="empty-state">No security results available.</div>
+        {% endif %}
+    </section>
+
+    <!-- REPOSITORY ACTIVITY -->
+    <section class="panel">
+        <div class="section-heading">
+            <div>
+                <span class="eyebrow">DEVELOPMENT TRENDS</span>
+                <h2>📅 Repository Activity</h2>
+            </div>
+        </div>
+
+        {% if activity %}
+        <div class="result-grid">
+            {% for key, value in activity.items() %}
+            <article class="result-card">
+                <h3>{{ key|replace("_", " ")|title }}</h3>
+                {% if value is mapping %}
+                    <ul>
+                        {% for subkey, subvalue in value.items() %}
+                        <li><strong>{{ subkey|title }}:</strong> {{ subvalue }}</li>
+                        {% endfor %}
+                    </ul>
+                {% elif value is iterable and value is not string %}
+                    <ul>
+                        {% for item in value %}
+                        <li>{{ item }}</li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p>{{ value }}</p>
+                {% endif %}
+            </article>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">No activity information is available.</div>
+        {% endif %}
+    </section>
+
+    <!-- CONTRIBUTORS -->
+    <section class="panel">
+        <div class="section-heading">
+            <div>
+                <span class="eyebrow">TEAM CONTRIBUTIONS</span>
+                <h2>👥 Contributor Analysis</h2>
+            </div>
+        </div>
+
+        {% if contributor_analysis %}
+        <div class="result-grid">
+            {% for key, value in contributor_analysis.items() %}
+            <article class="result-card">
+                <h3>{{ key|replace("_", " ")|title }}</h3>
+                {% if value is mapping %}
+                    <ul>
+                        {% for subkey, subvalue in value.items() %}
+                        <li><strong>{{ subkey|title }}:</strong> {{ subvalue }}</li>
+                        {% endfor %}
+                    </ul>
+                {% elif value is iterable and value is not string %}
+                    <ul>
+                        {% for item in value %}
+                            {% if item is mapping %}
+                                <li>
+                                    {% for subkey, subvalue in item.items() %}
+                                        <strong>{{ subkey|title }}:</strong>
+                                        {{ subvalue }}{% if not loop.last %}, {% endif %}
+                                    {% endfor %}
+                                </li>
+                            {% else %}
+                                <li>{{ item }}</li>
+                            {% endif %}
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p>{{ value }}</p>
+                {% endif %}
+            </article>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">No contributor analysis is available.</div>
+        {% endif %}
+    </section>
+
+    <!-- ISSUES AND PULL REQUESTS -->
+    <section class="panel">
+        <div class="section-heading">
+            <div>
+                <span class="eyebrow">PROJECT COLLABORATION</span>
+                <h2>🐛 Issues and Pull Requests</h2>
+            </div>
+        </div>
+
+        {% if issue_pr_analysis %}
+        <div class="result-grid">
+            {% for key, value in issue_pr_analysis.items() %}
+            <article class="result-card">
+                <h3>{{ key|replace("_", " ")|title }}</h3>
+                {% if value is mapping %}
+                    <ul>
+                        {% for subkey, subvalue in value.items() %}
+                        <li><strong>{{ subkey|replace("_", " ")|title }}:</strong>
+                            {{ subvalue }}</li>
+                        {% endfor %}
+                    </ul>
+                {% elif value is iterable and value is not string %}
+                    <ul>
+                        {% for item in value %}
+                        <li>{{ item }}</li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p>{{ value }}</p>
+                {% endif %}
+            </article>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            No issue or pull-request analysis is available.
+        </div>
+        {% endif %}
+    </section>
+
+    <!-- REPOSITORY STRUCTURE -->
+    <section class="panel">
+        <div class="section-heading">
+            <div>
+                <span class="eyebrow">FILES AND DIRECTORIES</span>
+                <h2>🗂️ Repository Structure</h2>
+            </div>
+        </div>
+
+        {% if structure %}
+        <div class="structure-list">
+            {% for item in structure %}
+            <div class="structure-item">
+                <span class="structure-icon">
+                    {% if item.type == "dir" %}📁{% else %}📄{% endif %}
+                </span>
+                <span class="structure-name">
+                    {% if item.path is defined %}
+                        {{ item.path }}
+                    {% elif item.name is defined %}
+                        {{ item.name }}
+                    {% else %}
+                        {{ item }}
+                    {% endif %}
+                </span>
+                {% if item.type is defined %}
+                <span class="structure-type">{{ item.type }}</span>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">No repository structure is available.</div>
+        {% endif %}
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="page-footer">
+        <p>RepoLens · GitHub Repository Analysis Dashboard</p>
+        <p>Analysis is based on information returned by GitHub and the configured analyzers.</p>
+        <a href="/">Analyze another repository</a>
+    </footer>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    // Animate analytics progress bars.
+    document.querySelectorAll(".analytics-progress-bar").forEach(function (bar) {
+        const rawScore = Number(bar.dataset.score || 0);
+        const score = Math.max(0, Math.min(100, rawScore));
+        bar.style.width = score + "%";
+    });
+
+    // Language chart.
+    const languageCanvas = document.getElementById("languageChart");
+
+    if (languageCanvas) {
+        const languageLabels = {{ languages.keys()|list|tojson }};
+        const languageValues = {{ languages.values()|list|tojson }};
+
+        if (languageLabels.length > 0 && typeof Chart !== "undefined") {
+            new Chart(languageCanvas, {
+                type: "doughnut",
+                data: {
+                    labels: languageLabels,
+                    datasets: [{
+                        data: languageValues,
+                        borderWidth: 2,
+                        hoverOffset: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: "bottom"
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function (context) {
+                                    return context.label + ": " +
+                                        context.formattedValue + "%";
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    }
+
+    // Step 19: searchable dashboard sections and quick navigation.
+    const searchInput = document.getElementById("dashboardSearch");
+    const clearButton = document.getElementById("clearDashboardSearch");
+    const navContainer = document.getElementById("dashboardQuickNav");
+    const searchStatus = document.getElementById("dashboardSearchStatus");
+
+    if (!searchInput || !clearButton || !navContainer || !searchStatus) {
+        return;
+    }
+
+    const panels = Array.from(document.querySelectorAll(".container > .panel"))
+        .filter(function (panel) {
+            return panel.id !== "dashboard-tools";
+        });
+
+    const usedIds = new Set();
+
+    function makeId(text, index) {
+        let base = text.toLowerCase()
+            .replace(/[^a-z0-9]+/g, "-")
+            .replace(/^-|-$/g, "");
+
+        if (!base) {
+            base = "dashboard-section-" + (index + 1);
+        }
+
+        let id = base;
+        let counter = 2;
+
+        while (usedIds.has(id) || document.getElementById(id)) {
+            id = base + "-" + counter;
+            counter += 1;
+        }
+
+        usedIds.add(id);
+        return id;
+    }
+
+    panels.forEach(function (panel, index) {
+        const heading = panel.querySelector(".section-heading h2");
+        const title = heading ? heading.textContent.trim() : "Dashboard Section";
+
+        if (!panel.id || panel.id === "repository-information") {
+            panel.id = makeId(title, index);
+        } else {
+            usedIds.add(panel.id);
+        }
+
+        const link = document.createElement("a");
+        link.className = "dashboard-nav-link";
+        link.href = "#" + panel.id;
+        link.textContent = title;
+        link.dataset.target = panel.id;
+
+        link.addEventListener("click", function (event) {
+            event.preventDefault();
+
+            if (panel.hidden) {
+                searchInput.value = "";
+                filterPanels();
+            }
+
+            panel.scrollIntoView({
+                behavior: "smooth",
+                block: "start"
+            });
+
+            history.replaceState(null, "", "#" + panel.id);
+        });
+
+        navContainer.appendChild(link);
+    });
+
+    function filterPanels() {
+        const query = searchInput.value.trim().toLowerCase();
+        let visibleCount = 0;
+
+        panels.forEach(function (panel) {
+            const matches = !query ||
+                panel.textContent.toLowerCase().includes(query);
+
+            panel.hidden = !matches;
+
+            if (matches) {
+                visibleCount += 1;
+            }
+        });
+
+        navContainer.querySelectorAll(".dashboard-nav-link").forEach(function (link) {
+            const target = document.getElementById(link.dataset.target);
+            link.hidden = !target || target.hidden;
+        });
+
+        if (!query) {
+            searchStatus.textContent =
+                "Showing all " + panels.length + " dashboard sections.";
+        } else if (visibleCount === 0) {
+            searchStatus.textContent =
+                "No sections match \"" + searchInput.value.trim() + "\".";
+        } else {
+            searchStatus.textContent =
+                visibleCount + " section(s) match \"" +
+                searchInput.value.trim() + "\".";
+        }
+    }
+
+    searchInput.addEventListener("input", filterPanels);
+
+    clearButton.addEventListener("click", function () {
+        searchInput.value = "";
+        filterPanels();
+        searchInput.focus();
+    });
+
+    filterPanels();
+});
+</script>
+</body>
+</html>
+
+
+
