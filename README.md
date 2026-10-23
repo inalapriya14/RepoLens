@@ -96,3 +96,12 @@ GitHub: https://github.com/inalapriya14
 
 A license has not yet been selected for this project.
 
+## 📸 Screenshots
+
+### Repository Analytics Dashboard
+![RepoLens Dashboard](screenshots/repolens-dashboard.png)
+
+### Repository Comparison
+![RepoLens Comparison](screenshots/repolens-comparison.png)
+
+
